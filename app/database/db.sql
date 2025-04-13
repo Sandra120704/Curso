@@ -36,8 +36,86 @@ INSERT INTO Materias (id_Categoria, Materia, Titulo, Duracion_Horas, Nivel, Prec
     (2, 'Literatura','La Odisea','04:30:00','Intermedio',55.00,'2025-02-11'),
     (3, 'Informatica','Sistemas de Información','03:30:00','Avanzado',65.00,'2025-02-22');
     
-SELECT * FROM Categorias
+SELECT * FROM Categorias;
+SELECT * FROM Materias;
 
-SELECT * FROM Materias
+CREATE VIEW vista_materias_todo 
+AS
+SELECT
+    M.id_Materia,
+    M.id_Categoria,
+    M.Materia,
+    M.Titulo,
+    M.Duracion_Horas,
+    M.Nivel,
+    M.Precio,
+    M.Fecha_Inicio
+FROM Materias M
+INNER JOIN Categorias C ON M.id_Categoria = C.id_Categoria
+ORDER BY M.id_Materia;
 
+DELIMITER //
+
+CREATE PROCEDURE spu_materias_insertar
+(
+    IN _id_Categoria INT,
+    IN _Materia VARCHAR(50),
+    IN _Titulo VARCHAR(50),
+    IN _Duracion_Horas TIME,
+    IN _Nivel VARCHAR(50),
+    IN _Precio DECIMAL(10,2),
+    IN _Fecha_Inicio DATE
+)
+BEGIN
+	INSERT INTO Materias(id_Categoria, Materia, Titulo, Duracion_Horas, Nivel, Precio, Fecha_Inicio)
+		VALUES (_id_Categoria, _Materia, _Titulo, _Duracion_Horas, _Nivel, _Precio, _Fecha_Inicio);
+END //
+
+CALL spu_materias_insertar(1,'ALGEBRA','FUNCIONES','02:00:00','Intermedio','30.00','2025-03-12');
+
+DELIMITER //
+CREATE PROCEDURE spu_materias_actualizar(
+	IN _id_Materias INT,
+	IN _id_Categoria INT,
+    IN _Materia VARCHAR(50),
+    IN _Titulo VARCHAR(50),
+    IN _Duracion_Horas TIME,
+    IN _Nivel VARCHAR(50),
+    IN _Precio DECIMAL(10,2),
+    IN _Fecha_Inicio DATE
+)
+BEGIN
+	UPDATE Materias SET 
+    id_Categoria  =  _id_Categoria,
+    Materia		  =  _Materia,
+    Titulo		  = _Titulo,
+    Duracion_Horas = _Duracion_Horas,
+    Nivel		  = _Nivel,
+    Precio        = _Precio,
+    Fecha_Inicio  =_Fecha_Inicio
+	WHERE id_Materia = _id_Materias;
+END //
+
+DELIMITER //
+CREATE PROCEDURE spu_materia_eliminar(
+	IN _id_Materias INT 
+)
+BEGIN
+	DELETE FROM Materias WHERE id_Materia = _id_Materias;
+END//
+
+DELIMITER //
+CREATE PROCEDURE spu_materias_listar(
+)
+BEGIN 
+	SELECT * FROM vista_materias_todo;
+END //
+
+-- DELIMITER //
+-- CREATE TRIGGER materia_actualizar_fecha_modificar
+ -- BEFORE UPDATE ON Materias
+-- FOR EACH ROW
+-- BEGIN
+-- SET NEW.Fecha_Inicio = NOW();
+-- END//-- 
 
