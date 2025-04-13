@@ -1,72 +1,52 @@
 <?php
-  require_once("../config/database.php");
 
-  class Materias{
+class Materias {
+    private $db;
 
-    private $conexion;
-
-    public function __construct() { 
-      $this->conexion = Database::getconexion();
-    
+    public function __construct() {
+        // Asegúrate de tener una conexión válida a la base de datos
+        $this->db = new PDO('mysql:host=localhost;dbname=nombre_base_datos', 'usuario', 'contraseña');
     }
 
-    public function getAll(): array {
-      $sql = "SELECT * FROM vista_materias_todo";
-      $stmt = $this->conexion->prepare($sql);
-      $stmt->execute();
-    
-      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-      return $result; 
+    // Método para obtener todas las materias
+    public function getAll() {
+        $sql = "SELECT * FROM materias"; // Asegúrate de que la tabla se llame 'materias'
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC); // Devuelve las materias como un array asociativo
     }
-    
-    public function add($params =[]): int {
-      $sql = "CALL spu_materias_insertar(?,?,?,?,?,?,?)";
-    
-      $stm = $this->conexion->prepare($sql);
-      $stm->execute(
-        array(
-          $params ["id_Categoria"],
-          $params ["Materia"],
-          $params ["Titulo"],
-          $params ["Duracion_Horas"],
-          $params ["Nivel"],
-          $params ["Precio"],
-          $params ["Fecha_Inicio"],
-        ));
-        return $stm->rowCount();
+
+    // Método para obtener una materia por su ID
+    public function getById($id) {
+        $sql = "SELECT * FROM materias WHERE id_Materia = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC); // Devuelve una sola materia
     }
-    public function edit($params = []): int {
-      $sql = "UPDATE Materias SET id_Categoria=?, Materia=?,Titulo=?, Duracion_Horas=?,Nivel=?, Precio=?,Fecha_Inicio=? WHERE id_Materia=?";
-      $stmt = $this->conexion->prepare($sql);
-      $stmt->execute( [
-      $params ["id_Categoria"],
-      $params ["Materia"],
-      $params ["Titulo"],
-      $params ["Duracion_Horas"],
-      $params ["Nivel"],
-      $params ["Precio"],
-      $params ["Fecha_Inicio"],
-      $params ["id_Materia"],
-      ]);
-    return $stmt->rowCount();
-  }
-  public function delete($params = []):int{
-    $sql = "DELETE FROM Materias WHERE id_Materia=?";
-    $stmt = $this->conexion->prepare($sql);
-    $stmt->execute(
-      array(
-        $params["id_Materia"]
-      )
-    );
-    return $stmt->rowCount();
-  }
-  public function getById($id):array{
-    $sql = "SELECT * FROM Materias WHERE id_Materia=?";
-    $stmt = $this->conexion->prepare($sql);
-    $stmt->execute(
-      array($id)
-    );
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-  } 
-  
-  }
+
+    // Método para agregar una nueva materia
+    public function add($data) {
+        $sql = "INSERT INTO materias (id_Categoria, Materia, Titulo, Duracion_Horas, Nivel, Precio, Fecha_Inicio) 
+                VALUES (:id_Categoria, :Materia, :Titulo, :Duracion_Horas, :Nivel, :Precio, :Fecha_Inicio)";
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->bindParam(':id_Categoria', $data['id_Categoria']);
+        $stmt->bindParam(':Materia', $data['Materia']);
+        $stmt->bindParam(':Titulo', $data['Titulo']);
+        $stmt->bindParam(':Duracion_Horas', $data['Duracion_Horas']);
+        $stmt->bindParam(':Nivel', $data['Nivel']);
+        $stmt->bindParam(':Precio', $data['Precio']);
+        $stmt->bindParam(':Fecha_Inicio', $data['Fecha_Inicio']);
+
+        return $stmt->execute(); // Devuelve verdadero si se insertó correctamente
+    }
+
+    // Método para eliminar una materia
+    public function delete($data) {
+        $sql = "DELETE FROM materias WHERE id_Materia = :id_Materia";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':id_Materia', $data['id_Materia'], PDO::PARAM_INT);
+        return $stmt->execute(); // Devuelve verdadero si se eliminó correctamente
+    }
+}
