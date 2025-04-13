@@ -1,61 +1,63 @@
 <?php
-// Verifica que el archivo se esté ejecutando correctamente
-if (isset($_SERVER['REQUEST_METHOD'])) {
+if ($_SERVER['REQUEST_METHOD']) {
 
-    require_once "../models/Materias.php"; // Asegúrate de que la ruta sea correcta
+  require_once "../models/materias.php";
 
-    $materias = new Materias(); // Instancia la clase
+  $materias = new Materias();
 
-    // Acción de acuerdo al tipo de solicitud HTTP
-    switch ($_SERVER['REQUEST_METHOD']) {
-        case 'GET':
-            header('Content-Type: application/json');
+  switch ($_SERVER['REQUEST_METHOD']) {
 
-            // Verifica la tarea que se solicita
-            if ($_GET['task'] == 'getAll') {
-                // Devuelve todas las materias
-                echo json_encode($materias->getAll());
-            } else if ($_GET['task'] == 'getById') {
-                // Devuelve una materia por su ID
-                echo json_encode($materias->getById($_GET['id_Materia']));
-            }
-            break;
+    case 'GET':
+      header('Content-Type: application/json');
 
-        case 'POST':
-            // Recibe los datos en formato JSON
-            $input = file_get_contents('php://input');
-            $dataJSON = json_decode($input, true);
+      $task = $_GET['task'] ?? '';
 
-            // Datos a insertar en la base de datos
-            $insetar = [
-                'id_Categoria' => $dataJSON['id_Categoria'],
-                'Materia' => $dataJSON['Materia'],
-                'Titulo' => $dataJSON['Titulo'],
-                'Duracion_Horas' => $dataJSON['Duracion_Horas'],
-                'Nivel' => $dataJSON['Nivel'],
-                'Precio' => $dataJSON['Precio'],
-                'Fecha_Inicio' => $dataJSON['Fecha_Inicio'],
-            ];
+      if ($task === 'getAll') {
+        echo json_encode($materias->getAll());
+      } elseif ($task === 'getById' && isset($_GET['id_Materia'])) {
+        echo json_encode($materias->getById($_GET['id_Materia']));
+      }
+      break;
 
-            // Inserta los datos en la base de datos
-            $filasAfectadas = $materias->add($insetar);
+    case 'POST':
+      header('Content-Type: application/json');
 
-            header('Content-Type: application/json');
-            echo json_encode(["filas" => $filasAfectadas]);
-            break;
+      $input = file_get_contents('php://input'); // CORREGIDO: faltaba una barra en php://input
+      $dataJSON = json_decode($input, true);
 
-        case 'DELETE':
-            header('Content-Type: application/json');
+      if ($dataJSON) {
+        $insertar = [
+          'id_Categoria' => $dataJSON['id_Categoria'],
+          'Materia' => $dataJSON['Materia'],
+          'Titulo' => $dataJSON['Titulo'],
+          'Duracion_Horas' => $dataJSON['Duracion_Horas'],
+          'Nivel' => $dataJSON['Nivel'],
+          'Precio' => $dataJSON['Precio'],
+          'Fecha_Inicio' => $dataJSON['Fecha_Inicio']
+        ];
 
-            // Recupera el ID de la materia desde la URL
-            $url = $_SERVER['REQUEST_URI'];
-            $arrayURL = explode('/', $url);
-            $idMateria = end($arrayURL);
+        $filasAfectadas = $materias->add($insertar);
+        echo json_encode(["success" => true, "filas" => $filasAfectadas]);
+      } else {
+        echo json_encode(["success" => false, "error" => "Datos inválidos"]);
+      }
+      break;
 
-            // Elimina la materia de la base de datos
-            $filasAfectadas = $materias->delete(['id_Materia' => $idMateria]);
+    case 'DELETE':
+      header('Content-Type: application/json');
 
-            echo json_encode(["filas" => $filasAfectadas]);
-            break;
-    }
+      // Extraer ID de la URL
+      $url = $_SERVER['REQUEST_URI'];
+      $urlParts = explode('/', $url);
+      $idMateria = end($urlParts);
+
+      if (is_numeric($idMateria)) {
+        $filasAfectadas = $materias->delete(['id_Materia' => $idMateria]);
+        echo json_encode(["success" => true, "filas" => $filasAfectadas]);
+      } else {
+        echo json_encode(["success" => false, "error" => "ID inválido"]);
+      }
+      break;
+  }
 }
+
